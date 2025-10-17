@@ -1,5 +1,5 @@
 ﻿using BE_project.DTOs.User;
-using Microsoft.AspNetCore.Http;
+using BE_project.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_project.Controllers
@@ -8,28 +8,42 @@ namespace BE_project.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        [HttpPost] // POST /user
-        public IActionResult CreateUser(CreateUserDTO userDto)
+        private readonly IUserService _userService;
+        public UserController(IUserService userService)
         {
-            return Ok();
+            _userService = userService;
+        }
+
+        [HttpPost] // POST /user
+        public ActionResult<UserDTO> CreateUser(CreateUserDTO userDto)
+        {
+            var newUser = _userService.CreateUser(userDto);
+            return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser); //201
         }
 
         [HttpGet("users")] // GET /user/users
-        public IActionResult GetUsers()
+        public ActionResult<IEnumerable<UserDTO>> GetUsers()
         {
-            return Ok();
+            var users = _userService.GetAllUsers();
+            return Ok(users);
         }
 
         [HttpGet("{userId}")] // GET /user/{id}
-        public IActionResult GetUserById(int userId)
+        public ActionResult<UserDTO> GetUserById(int userId)
         {
-            return Ok();
+            var user = _userService.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return Ok(user);
         }
 
         [HttpDelete("{userId}")] // DELETE /user/{id}
         public IActionResult DeleteUser(int userId)
         {
-            return Ok();
+            _userService.DeleteUser(userId);
+            return NoContent(); // 204
         }
     }
 }

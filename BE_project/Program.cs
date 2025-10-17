@@ -16,6 +16,12 @@ builder.Services.AddSingleton<InMemoryDataStore>();
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<IUserService, UserService>();
 
+builder.Services.AddSingleton<RecordRepository>();
+builder.Services.AddSingleton<IRecordService, RecordService>();
+
+builder.Services.AddSingleton<CategoryRepository>();
+builder.Services.AddSingleton<ICategoryService, CategoryService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -1,5 +1,6 @@
 ﻿using BE_project.DTOs.Category;
-using Microsoft.AspNetCore.Http;
+using BE_project.Models;
+using BE_project.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_project.Controllers
@@ -8,22 +9,35 @@ namespace BE_project.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        [HttpPost] // POST /category
-        public IActionResult CreateCategory(CreateCategoryDTO userDto)
+        private readonly ICategoryService _categoryService;
+        public CategoryController(ICategoryService categoryService)
         {
-            return Ok();
+            _categoryService = categoryService;
+        }
+
+        [HttpPost] // POST /category
+        public ActionResult<CategoryDTO> CreateCategory(CreateCategoryDTO userDto)
+        {
+            var newCategory = _categoryService.CreateCategory(userDto);
+            return CreatedAtAction(nameof(DeleteCategory), new { categoryId = newCategory.Id }, newCategory); //201
         }
 
         [HttpGet] // GET /category
-        public IActionResult GetCategory()
+        public ActionResult<List<CategoryDTO>> GetCategory()
         {
-            return Ok();
+            var category = _categoryService.GetAllCategories();
+            if (category == null)
+            {
+                return NotFound();
+            }
+            return Ok(category);
         }
 
         [HttpDelete("{categoryId}")] // DELETE /category/{id}
         public IActionResult DeleteCategory(int categoryId)
         {
-            return Ok();
+            _categoryService.DeleteCategory(categoryId);
+            return NoContent(); // 204
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BE_project.DTOs.Record;
-using Microsoft.AspNetCore.Http;
+using BE_project.Models;
+using BE_project.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_project.Controllers
@@ -8,22 +9,35 @@ namespace BE_project.Controllers
     [ApiController]
     public class RecordController : ControllerBase
     {
-        [HttpPost] // POST /record
-        public IActionResult CreateRecord(CreateRecordDTO userDto)
+        private readonly IRecordService _recordService;
+        public RecordController(IRecordService recordService)
         {
-            return Ok();
+            _recordService = recordService;
+        }
+
+        [HttpPost] // POST /record
+        public ActionResult<RecordDTO> CreateRecord(CreateRecordDTO recordDto)
+        {
+            var newRecord = _recordService.CreateRecord(recordDto);
+            return CreatedAtAction(nameof(GetRecordById), new { recordId = newRecord.Id }, newRecord); //201
         }
 
         [HttpGet("{recordId}")] // GET /record/{id}
-        public IActionResult GetRecordById(int recordId)
+        public ActionResult<RecordDTO> GetRecordById(int recordId)
         {
-            return Ok();
+            var record = _recordService.GetRecordById(recordId);
+            if (record == null)
+            {
+                return NotFound();
+            }
+            return Ok(record);
         }
 
         [HttpDelete("{recordId}")] // DELETE /record/{id}
         public IActionResult DeleteRecord(int recordId)
         {
-            return Ok();
+            _recordService.DeleteRecord(recordId);
+            return NoContent(); // 204
         }
 
         [HttpGet] // GET /record?userId=1&categoryId=5
@@ -33,8 +47,12 @@ namespace BE_project.Controllers
             {
                 return BadRequest("You must provide at least a userId or a categoryId.");
             }
-            // ... 
-            return Ok();
+            var record = _recordService.GetRecords(userId, categoryId);
+            if (record == null)
+            {
+                return NotFound();
+            }
+            return Ok(record);
         }
     }
 }
