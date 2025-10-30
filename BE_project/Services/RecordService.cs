@@ -20,7 +20,7 @@ namespace BE_project.Services
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO)
+        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO, int userId)
         {
             if (createRecordDTO.Amount <= 0)
             {
@@ -33,7 +33,7 @@ namespace BE_project.Services
                 throw new NotFoundException($"User with ID {createRecordDTO.UserId} not found. Cannot create record.");
             }
 
-            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId);
+            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId, userId);
             if (categoryExists == null)
             {
                 throw new NotFoundException($"Category with ID {createRecordDTO.CategoryId} not found. Cannot create record.");
@@ -43,7 +43,7 @@ namespace BE_project.Services
             {
                 UserId = createRecordDTO.UserId,
                 CategoryId = createRecordDTO.CategoryId,
-                DateTime = DateTime.Now, // Логіка сервісу - встановлюємо поточний час
+                DateTime = DateTime.UtcNow, // Логіка сервісу - встановлюємо поточний час
                 Amount = createRecordDTO.Amount,
                 User = userExists,
                 Category = categoryExists,
@@ -54,9 +54,9 @@ namespace BE_project.Services
             return MapToRecordDTO(savedRecord);
         }
 
-        public async Task DeleteRecordAsync(int recordId)
+        public async Task DeleteRecordAsync(int recordId, int userId)
         {
-            var recordToDelete = await _recordRepository.GetByIdAsync(recordId);
+            var recordToDelete = await _recordRepository.GetByIdAsync(recordId, userId);
             if (recordToDelete == null)
             {
                 throw new NotFoundException($"Record with ID {recordId} not found.");
@@ -65,9 +65,9 @@ namespace BE_project.Services
             await _recordRepository.DeleteAsync(recordId); 
         }
 
-        public async Task<RecordDTO> GetRecordByIdAsync(int recordId)
+        public async Task<RecordDTO> GetRecordByIdAsync(int recordId, int userId)
         {
-            var record = await _recordRepository.GetByIdAsync(recordId);
+            var record = await _recordRepository.GetByIdAsync(recordId, userId);
 
             if (record == null)
             {

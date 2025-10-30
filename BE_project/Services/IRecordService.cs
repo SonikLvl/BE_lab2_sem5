@@ -4,9 +4,9 @@ namespace BE_project.Services
 {
     public interface IRecordService
     {
-        Task<RecordDTO> GetRecordByIdAsync(int recordId);
-        Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO);
-        Task DeleteRecordAsync(int recordId);
+        Task<RecordDTO> GetRecordByIdAsync(int recordId, int userId);
+        Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO, int userid);
+        Task DeleteRecordAsync(int recordId, int userId);
         Task<IEnumerable<RecordDTO>> GetRecordsAsync(int? userId, int? categoryId);
     }
 }

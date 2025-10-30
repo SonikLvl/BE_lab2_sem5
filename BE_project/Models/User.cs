@@ -11,5 +11,6 @@ namespace BE_project.Models
         public required string Name { get; set; }
 
         public ICollection<Record> Records { get; set; } = new List<Record>();
+        public ICollection<Category> Categories { get; set; } = new List<Category>();
     }
 }

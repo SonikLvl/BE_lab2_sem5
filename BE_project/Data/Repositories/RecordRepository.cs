@@ -12,9 +12,9 @@ namespace BE_project.Data.Repositories
             _context = dataStore;
         }
 
-        public async Task<Record?> GetByIdAsync(int recordId)
+        public async Task<Record?> GetByIdAsync(int recordId, int userId)
         {
-            return await _context.Records.FirstOrDefaultAsync(r => r.Id == recordId);
+            return await _context.Records.FirstOrDefaultAsync(r => r.Id == recordId && r.UserId == userId);
         }
 
         public async Task<Record> AddAsync(Record record)

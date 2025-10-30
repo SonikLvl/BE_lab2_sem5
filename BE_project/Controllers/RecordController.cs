@@ -17,12 +17,12 @@ namespace BE_project.Controllers
         }
 
         [HttpPost] // POST /record
-        public async Task<ActionResult<RecordDTO>> CreateRecord(CreateRecordDTO recordDTO)
+        public async Task<ActionResult<RecordDTO>> CreateRecord([FromBody] CreateRecordDTO recordDTO)
         {
             try
             {
-                var createdRecord = await _recordService.CreateRecordAsync(recordDTO);
-                return CreatedAtAction(nameof(GetRecordById), new { id = createdRecord.Id }, createdRecord);// 201
+                var createdRecord = await _recordService.CreateRecordAsync(recordDTO, recordDTO.UserId);
+                return CreatedAtAction(nameof(GetRecordById), new { recordId = createdRecord.Id, userId = createdRecord.UserId }, createdRecord);// 201
             }
             catch (ValidationException ex)
             {
@@ -34,12 +34,12 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpGet("{recordId}")] // GET /record/{id}
-        public async Task<ActionResult<RecordDTO>> GetRecordById(int recordId)
+        [HttpGet("{recordId}")] // GET /record/{id}?userId=userId
+        public async Task<ActionResult<RecordDTO>> GetRecordById(int recordId, [FromQuery] int userId)
         {
             try
             {
-                var record = await _recordService.GetRecordByIdAsync(recordId);
+                var record = await _recordService.GetRecordByIdAsync(recordId, userId);
                 return Ok(record); // 200 
             }
             catch (NotFoundException ex)
@@ -48,12 +48,12 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpDelete("{recordId}")] // DELETE /record/{id}
-        public async Task<IActionResult> DeleteRecord(int recordId)
+        [HttpDelete("{recordId}")] // DELETE /record/{id}?userId=userId
+        public async Task<IActionResult> DeleteRecord(int recordId, [FromQuery] int userId)
         {
             try
             {
-                await _recordService.DeleteRecordAsync(recordId);
+                await _recordService.DeleteRecordAsync(recordId, userId);
                 return NoContent(); // 204 
             }
             catch (NotFoundException ex)

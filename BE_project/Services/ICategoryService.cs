@@ -4,9 +4,11 @@ namespace BE_project.Services
 {
     public interface ICategoryService
     {
+        Task<IEnumerable<CategoryDTO>> GetAllCategoriesByUserAsync(int userId);
         Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync();
-        Task<CategoryDTO> GetCategoryByIdAsync(int categoryId);
-        Task<CategoryDTO> CreateCategoryAsync(CreateCategoryDTO createCategoryDTO);
-        Task DeleteCategoryAsync(int categoryId);
+        Task<CategoryDTO> GetCategoryByIdAsync(int categoryId, int userId);
+        Task<CategoryDTO> GetCategoryByNameAsync(string categoryName, int userId);
+        Task<CategoryDTO> CreateCategoryAsync(CreateCategoryDTO createCategoryDTO, int? userId);
+        Task DeleteCategoryAsync(int categoryId, int userId);
     }
 }

@@ -15,13 +15,13 @@ namespace BE_project.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpPost] // POST /category
-        public async Task<ActionResult<CategoryDTO>> CreateCategory(CreateCategoryDTO categoryDTO)
+        [HttpPost] // POST /category?userId=1
+        public async Task<ActionResult<CategoryDTO>> CreateCategory(CreateCategoryDTO categoryDTO, [FromQuery] int? userId)
         {
             try
             {
-                var createdCategory = await _categoryService.CreateCategoryAsync(categoryDTO);
-                return CreatedAtAction(nameof(DeleteCategory), new { categoryId = createdCategory.Id }, createdCategory); //201
+                var createdCategory = await _categoryService.CreateCategoryAsync(categoryDTO, userId);
+                return CreatedAtAction(nameof(GetCategoryById), new { categoryId = createdCategory.Id, UserId = userId }, createdCategory); //201
             }
             catch (ValidationException ex)
             {
@@ -29,19 +29,38 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpGet] // GET /category
+        [HttpGet("allById")] // GET /category/allById?userId=1
+        public async Task<ActionResult<List<CategoryDTO>>> GetCategory([FromQuery] int userId)
+        {
+            var categories = await _categoryService.GetAllCategoriesByUserAsync(userId);
+            return Ok(categories); // 200 
+        }
+        [HttpGet("all")] // GET /category/all
         public async Task<ActionResult<List<CategoryDTO>>> GetCategory()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
             return Ok(categories); // 200 
         }
 
-        [HttpGet("{categoryId}")] // GET /category/{id}
-        public async Task<IActionResult> GetCategoryById(int categoryId)
+        [HttpGet("{categoryId}/{userId}")] // GET /category/{id}/{userid}
+        public async Task<IActionResult> GetCategoryById(int categoryId, int userId)
         {
             try
             {
-                var category = await _categoryService.GetCategoryByIdAsync(categoryId);
+                var category = await _categoryService.GetCategoryByIdAsync(categoryId, userId);
+                return Ok(category); // 200 
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404 
+            }
+        }
+        [HttpGet("{userId}")] // GET /category?categoryName=name/{userid}
+        public async Task<IActionResult> GetCategoryByName([FromQuery] string categoryName, int userId)
+        {
+            try
+            {
+                var category = await _categoryService.GetCategoryByNameAsync(categoryName, userId);
                 return Ok(category); // 200 
             }
             catch (NotFoundException ex)
@@ -50,12 +69,12 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpDelete("{categoryId}")] // DELETE /category/{id}
-        public async Task<IActionResult> DeleteCategory(int categoryId)
+        [HttpDelete("{categoryId}/{userId}")] // DELETE /category/{id}/{userid}
+        public async Task<IActionResult> DeleteCategory(int categoryId, int userId)
         {
             try
             {
-                await _categoryService.DeleteCategoryAsync(categoryId);
+                await _categoryService.DeleteCategoryAsync(categoryId, userId);
                 return NoContent(); // 204 
             }
             catch (NotFoundException ex)

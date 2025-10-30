@@ -1,5 +1,6 @@
 ﻿using BE_project.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Xml.Linq;
 
 namespace BE_project.Data.Repositories
 {
@@ -15,6 +16,12 @@ namespace BE_project.Data.Repositories
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
             return await _context.Categories.ToListAsync();
+        }
+        public async Task<IEnumerable<Category>> GetCategoriesForUserAsync(int userId)
+        {
+            return await _context.Categories
+                .Where(c => c.UserId == null || c.UserId == userId)
+                .ToListAsync();
         }
 
         public async Task<Category> AddAsync(Category category)
@@ -36,14 +43,14 @@ namespace BE_project.Data.Repositories
             }
         }
 
-        public async Task<Category?> GetByIdAsync(int categoryId)
+        public async Task<Category?> GetByIdAsync(int categoryId, int? userId)
         {
-            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
+            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId && (c.UserId == null || c.UserId == userId));
         }
 
-        public async Task<Category?> GetByNameAsync(string categoryId)
+        public async Task<Category?> GetByNameAsync(string categoryName, int? userId)
         {
-            return await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryId);
+            return await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryName && (c.UserId == null || c.UserId == userId));
         }
     }
 }
