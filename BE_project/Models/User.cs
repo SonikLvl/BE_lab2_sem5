@@ -1,8 +1,15 @@
-﻿namespace BE_project.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace BE_project.Models
 {
     public class User
     {
+        [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
+
+        [Required]
+        public required string Name { get; set; }
+
+        public ICollection<Record> Records { get; set; } = new List<Record>();
     }
 }

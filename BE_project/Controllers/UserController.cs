@@ -1,4 +1,5 @@
 ﻿using BE_project.DTOs.User;
+using BE_project.Exceptions;
 using BE_project.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,35 +16,52 @@ namespace BE_project.Controllers
         }
 
         [HttpPost] // POST /user
-        public ActionResult<UserDTO> CreateUser(CreateUserDTO userDto)
+        public async Task<ActionResult<UserDTO>> CreateUser(CreateUserDTO userDTO)
         {
-            var newUser = _userService.CreateUser(userDto);
-            return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser); //201
+            try
+            {
+                var newUser = await _userService.CreateUserAsync(userDTO);
+                return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser); //201
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message }); // 400
+            }
         }
 
         [HttpGet("users")] // GET /user/users
-        public ActionResult<IEnumerable<UserDTO>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            var users = _userService.GetAllUsers();
+            var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
 
         [HttpGet("{userId}")] // GET /user/{id}
-        public ActionResult<UserDTO> GetUserById(int userId)
+        public async Task<ActionResult<UserDTO>> GetUserById(int userId)
         {
-            var user = _userService.GetUserById(userId);
-            if (user == null)
+            try
             {
-                return NotFound();
+                var user = await _userService.GetUserByIdAsync(userId);
+                return Ok(user);
             }
-            return Ok(user);
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404
+            }
         }
 
         [HttpDelete("{userId}")] // DELETE /user/{id}
-        public IActionResult DeleteUser(int userId)
+        public async Task<IActionResult> DeleteUser(int userId)
         {
-            _userService.DeleteUser(userId);
-            return NoContent(); // 204
+            try
+            {
+                await _userService.DeleteUserAsync(userId);
+                return NoContent(); // 204
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404
+            }
         }
     }
 }

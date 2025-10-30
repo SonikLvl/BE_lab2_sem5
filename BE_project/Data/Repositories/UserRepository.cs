@@ -1,39 +1,43 @@
 ﻿using BE_project.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BE_project.Data.Repositories
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
-        private readonly InMemoryDataStore _dataStore;
+        private readonly ApplicationDbContext _context;
 
-        public UserRepository(InMemoryDataStore dataStore)
+        public UserRepository(ApplicationDbContext dataStore)
         {
-            _dataStore = dataStore;
+            _context = dataStore;
         }
 
-        public IEnumerable<User> GetAll()
+        public async Task<IEnumerable<User>> GetAllAsync()
         {
-            return _dataStore.Users;
+            return await _context.Users.ToListAsync();
         }
 
-        public User? GetById(int userId)
+        public async Task<User?> GetByIdAsync(int userId)
         {
-            return _dataStore.Users.FirstOrDefault(u => u.Id == userId);
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         }
 
-        public User Add(User user)
+        public async Task<User> AddAsync(User user)
         {
-            user.Id = _dataStore.GetNextUserId();
-            _dataStore.Users.Add(user);
+            _context.Users.Add(user);
+
+            await _context.SaveChangesAsync();
             return user;
         }
 
-        public void Delete(int userId)
+        public async Task DeleteAsync(int userId)
         {
-            var user = GetById(userId);
+            var user = await _context.Users.FindAsync(userId);
             if (user != null)
             {
-                _dataStore.Users.Remove(user);
+                _context.Users.Remove(user);
+
+                await _context.SaveChangesAsync();
             }
         }
     }

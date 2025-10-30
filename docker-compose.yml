@@ -6,7 +6,7 @@ services:
     ports:
       - "8080:8080" 
     environment:
-      - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};SslMode=Require
     depends_on:
       - db 
 

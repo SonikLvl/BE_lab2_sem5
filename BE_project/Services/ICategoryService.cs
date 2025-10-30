@@ -4,8 +4,9 @@ namespace BE_project.Services
 {
     public interface ICategoryService
     {
-        IEnumerable<CategoryDTO> GetAllCategories();
-        CategoryDTO CreateCategory(CreateCategoryDTO createCategoryDTO);
-        void DeleteCategory(int categoryId);
+        Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync();
+        Task<CategoryDTO> GetCategoryByIdAsync(int categoryId);
+        Task<CategoryDTO> CreateCategoryAsync(CreateCategoryDTO createCategoryDTO);
+        Task DeleteCategoryAsync(int categoryId);
     }
 }

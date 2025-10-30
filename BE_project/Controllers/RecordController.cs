@@ -1,4 +1,5 @@
 ﻿using BE_project.DTOs.Record;
+using BE_project.Exceptions;
 using BE_project.Models;
 using BE_project.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,43 +17,60 @@ namespace BE_project.Controllers
         }
 
         [HttpPost] // POST /record
-        public ActionResult<RecordDTO> CreateRecord(CreateRecordDTO recordDto)
+        public async Task<ActionResult<RecordDTO>> CreateRecord(CreateRecordDTO recordDTO)
         {
-            var newRecord = _recordService.CreateRecord(recordDto);
-            return CreatedAtAction(nameof(GetRecordById), new { recordId = newRecord.Id }, newRecord); //201
+            try
+            {
+                var createdRecord = await _recordService.CreateRecordAsync(recordDTO);
+                return CreatedAtAction(nameof(GetRecordById), new { id = createdRecord.Id }, createdRecord);// 201
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message }); // 400
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404
+            }
         }
 
         [HttpGet("{recordId}")] // GET /record/{id}
-        public ActionResult<RecordDTO> GetRecordById(int recordId)
+        public async Task<ActionResult<RecordDTO>> GetRecordById(int recordId)
         {
-            var record = _recordService.GetRecordById(recordId);
-            if (record == null)
+            try
             {
-                return NotFound();
+                var record = await _recordService.GetRecordByIdAsync(recordId);
+                return Ok(record); // 200 
             }
-            return Ok(record);
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404 
+            }
         }
 
         [HttpDelete("{recordId}")] // DELETE /record/{id}
-        public IActionResult DeleteRecord(int recordId)
+        public async Task<IActionResult> DeleteRecord(int recordId)
         {
-            _recordService.DeleteRecord(recordId);
-            return NoContent(); // 204
+            try
+            {
+                await _recordService.DeleteRecordAsync(recordId);
+                return NoContent(); // 204 
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404 
+            }
         }
 
         [HttpGet] // GET /record?userId=1&categoryId=5
-        public IActionResult GetRecords([FromQuery] int? userId, [FromQuery] int? categoryId)
+        public async Task<IActionResult> GetRecords([FromQuery] int? userId, [FromQuery] int? categoryId)
         {
             if (!userId.HasValue && !categoryId.HasValue)
             {
                 return BadRequest("You must provide at least a userId or a categoryId.");
             }
-            var record = _recordService.GetRecords(userId, categoryId);
-            if (record == null)
-            {
-                return NotFound();
-            }
-            return Ok(record);
+            var records = await _recordService.GetRecordsAsync(userId, categoryId);
+            return Ok(records); // 200
         }
     }
 }

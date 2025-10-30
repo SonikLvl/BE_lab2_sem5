@@ -1,40 +1,44 @@
 ﻿using BE_project.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BE_project.Data.Repositories
 {
-    public class RecordRepository
+    public class RecordRepository : IRecordRepository
     {
-        private readonly InMemoryDataStore _dataStore;
+        private readonly ApplicationDbContext _context;
 
-        public RecordRepository(InMemoryDataStore dataStore)
+        public RecordRepository(ApplicationDbContext dataStore)
         {
-            _dataStore = dataStore;
+            _context = dataStore;
         }
 
-        public Record? GetById(int recordId)
+        public async Task<Record?> GetByIdAsync(int recordId)
         {
-            return _dataStore.Records.FirstOrDefault(r => r.Id == recordId);
+            return await _context.Records.FirstOrDefaultAsync(r => r.Id == recordId);
         }
 
-        public Record Add(Record record)
+        public async Task<Record> AddAsync(Record record)
         {
-            record.Id = _dataStore.GetNextUserId();
-            _dataStore.Records.Add(record);
+            _context.Records.Add(record);
+
+            await _context.SaveChangesAsync();
             return record;
         }
 
-        public void Delete(int recordId)
+        public async Task DeleteAsync(int recordId)
         {
-            var record = GetById(recordId);
+            var record = await _context.Records.FindAsync(recordId);
             if (record != null)
             {
-                _dataStore.Records.Remove(record);
+                _context.Records.Remove(record);
+
+                await _context.SaveChangesAsync();
             }
         }
 
-        public IEnumerable<Record> GetFiltered(int? userId, int? categoryId)
+        public async Task<IEnumerable<Record>> GetFilteredAsync(int? userId, int? categoryId)
         {
-            IEnumerable<Record> filteredRecords = _dataStore.Records;
+            IEnumerable<Record> filteredRecords = await _context.Records.ToListAsync();
 
             if (userId.HasValue)
             {

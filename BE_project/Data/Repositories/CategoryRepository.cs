@@ -1,35 +1,49 @@
 ﻿using BE_project.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BE_project.Data.Repositories
 {
-    public class CategoryRepository
+    public class CategoryRepository : ICategoryRepository
     {
-        private readonly InMemoryDataStore _dataStore;
+        private readonly ApplicationDbContext _context;
 
-        public CategoryRepository(InMemoryDataStore dataStore)
+        public CategoryRepository(ApplicationDbContext dataStore)
         {
-            _dataStore = dataStore;
+            _context = dataStore;
         }
 
-        public IEnumerable<Category> GetAll()
+        public async Task<IEnumerable<Category>> GetAllAsync()
         {
-            return _dataStore.Categories;
+            return await _context.Categories.ToListAsync();
         }
 
-        public Category Add(Category category)
+        public async Task<Category> AddAsync(Category category)
         {
-            category.Id = _dataStore.GetNextCategoryId();
-            _dataStore.Categories.Add(category);
+            _context.Categories.Add(category);
+
+            await _context.SaveChangesAsync();
             return category;
         }
 
-        public void Delete(int categoryId)
+        public async Task DeleteAsync(int categoryId)
         {
-            var category = _dataStore.Categories.FirstOrDefault(c => c.Id == categoryId);
+            var category = await _context.Categories.FindAsync(categoryId);
             if (category != null)
             {
-                _dataStore.Categories.Remove(category);
+                _context.Categories.Remove(category);
+
+                await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<Category?> GetByIdAsync(int categoryId)
+        {
+            return await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
+        }
+
+        public async Task<Category?> GetByNameAsync(string categoryId)
+        {
+            return await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryId);
         }
     }
 }
