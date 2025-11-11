@@ -3,11 +3,13 @@ using BE_project.Exceptions;
 using BE_project.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BE_project.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -23,7 +25,7 @@ namespace BE_project.Controllers
             try
             {
                 var newUser = await _userService.CreateUserAsync(userDTO);
-                return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id }, newUser); //201
+                return CreatedAtAction(nameof(GetUserById), new { userId = newUser.Id, passwordHash = newUser.PasswordHash }, newUser); //201
             }
             catch (ValidationException ex)
             {
@@ -70,9 +72,24 @@ namespace BE_project.Controllers
                 return NotFound(new { message = ex.Message }); // 404
             }
         }
+        [HttpGet("self")] // GET /user/self
+        public async Task<ActionResult<UserDTO>> GetUserSelf()
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(userId);
+                return Ok(user);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404
+            }
+        }
 
         [HttpDelete("{userId}")] // DELETE /user/{id}
-        public async Task<IActionResult> DeleteUser(int userId)
+        public async Task<IActionResult> DeleteUserById(int userId)
         {
             try
             {
@@ -83,6 +100,39 @@ namespace BE_project.Controllers
             {
                 return NotFound(new { message = ex.Message }); // 404
             }
+        }
+
+        [HttpDelete("self")] // DELETE /user/self
+        public async Task<IActionResult> DeleteUser()
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                await _userService.DeleteUserAsync(userId);
+                return NoContent(); // 204
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404
+            }
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                throw new UnauthorizedAccessException("Cannot find user ID claim in token.");
+            }
+
+            if (int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+
+            throw new UnauthorizedAccessException("User ID claim is in an invalid format.");
         }
     }
 }

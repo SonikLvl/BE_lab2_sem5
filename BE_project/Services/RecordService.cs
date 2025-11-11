@@ -20,20 +20,20 @@ namespace BE_project.Services
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO)
+        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO, int userId)
         {
             if (createRecordDTO.Amount <= 0)
             {
                 throw new ValidationException("Amount must be greater than zero.");
             }
 
-            var userExists = await _userRepository.GetByIdAsync(createRecordDTO.UserId);
+            var userExists = await _userRepository.GetByIdAsync(userId);
             if (userExists == null)
             {
-                throw new NotFoundException($"User with ID {createRecordDTO.UserId} not found. Cannot create record.");
+                throw new NotFoundException($"User with ID {userId} not found. Cannot create record.");
             }
 
-            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId, createRecordDTO.UserId);
+            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId, userId);
             if (categoryExists == null)
             {
                 throw new NotFoundException($"Category with ID {createRecordDTO.CategoryId} not found. Cannot create record.");
@@ -41,7 +41,7 @@ namespace BE_project.Services
 
             var newRecord = new Record
             {
-                UserId = createRecordDTO.UserId,
+                UserId = userId,
                 CategoryId = createRecordDTO.CategoryId,
                 DateTime = DateTime.UtcNow, // Логіка сервісу - встановлюємо поточний час
                 Amount = createRecordDTO.Amount,

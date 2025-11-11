@@ -102,7 +102,8 @@ namespace BE_project.Services
             return new UserDTO
             {
                 Id = user.Id,
-                Name = user.Name
+                Name = user.Name,
+                PasswordHash = user.PasswordHash,
             };
         }
 

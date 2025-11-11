@@ -1,12 +1,15 @@
 ﻿using BE_project.DTOs.Category;
 using BE_project.Exceptions;
 using BE_project.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BE_project.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -15,9 +18,11 @@ namespace BE_project.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpPost] // POST /category?userId=1
-        public async Task<ActionResult<CategoryDTO>> CreateCategory(CreateCategoryDTO categoryDTO, [FromQuery] int? userId)
+        [HttpPost] // POST /category
+        public async Task<ActionResult<CategoryDTO>> CreateCategory(CreateCategoryDTO categoryDTO)
         {
+            var userId = GetCurrentUserId();
+
             try
             {
                 var createdCategory = await _categoryService.CreateCategoryAsync(categoryDTO, userId);
@@ -29,22 +34,24 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpGet("allById")] // GET /category/allById?userId=1
-        public async Task<ActionResult<List<CategoryDTO>>> GetCategory([FromQuery] int userId)
+        [HttpGet("allById")] // GET /category/allById
+        public async Task<ActionResult<List<CategoryDTO>>> GetCategoriesByUser()
         {
+            var userId = GetCurrentUserId();
             var categories = await _categoryService.GetAllCategoriesByUserAsync(userId);
             return Ok(categories); // 200 
         }
         [HttpGet("all")] // GET /category/all
-        public async Task<ActionResult<List<CategoryDTO>>> GetCategory()
+        public async Task<ActionResult<List<CategoryDTO>>> GetCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
             return Ok(categories); // 200 
         }
 
-        [HttpGet("{categoryId}/{userId}")] // GET /category/{id}/{userid}
-        public async Task<IActionResult> GetCategoryById(int categoryId, int userId)
+        [HttpGet("{categoryId}")] // GET /category/{id}
+        public async Task<IActionResult> GetCategoryById(int categoryId)
         {
+            var userId = GetCurrentUserId();
             try
             {
                 var category = await _categoryService.GetCategoryByIdAsync(categoryId, userId);
@@ -55,9 +62,11 @@ namespace BE_project.Controllers
                 return NotFound(new { message = ex.Message }); // 404 
             }
         }
-        [HttpGet("{userId}")] // GET /category?categoryName=name/{userid}
-        public async Task<IActionResult> GetCategoryByName([FromQuery] string categoryName, int userId)
+        [HttpGet("")] // GET /category?categoryName=name
+        public async Task<IActionResult> GetCategoryByName([FromQuery] string categoryName)
         {
+            var userId = GetCurrentUserId();
+
             try
             {
                 var category = await _categoryService.GetCategoryByNameAsync(categoryName, userId);
@@ -69,9 +78,11 @@ namespace BE_project.Controllers
             }
         }
 
-        [HttpDelete("{categoryId}/{userId}")] // DELETE /category/{id}/{userid}
-        public async Task<IActionResult> DeleteCategory(int categoryId, int userId)
+        [HttpDelete("{categoryId}")] // DELETE /category/{id}
+        public async Task<IActionResult> DeleteCategory(int categoryId)
         {
+            var userId = GetCurrentUserId();
+
             try
             {
                 await _categoryService.DeleteCategoryAsync(categoryId, userId);
@@ -85,6 +96,22 @@ namespace BE_project.Controllers
             {
                 return BadRequest(new { message = ex.Message }); // 400 
             }
+        }
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                throw new UnauthorizedAccessException("Cannot find user ID claim in token.");
+            }
+
+            if (int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+
+            throw new UnauthorizedAccessException("User ID claim is in an invalid format.");
         }
     }
 }
