@@ -21,7 +21,7 @@ namespace BE_project.Controllers
         {
             try
             {
-                var createdRecord = await _recordService.CreateRecordAsync(recordDTO, recordDTO.UserId);
+                var createdRecord = await _recordService.CreateRecordAsync(recordDTO);
                 return CreatedAtAction(nameof(GetRecordById), new { recordId = createdRecord.Id, userId = createdRecord.UserId }, createdRecord);// 201
             }
             catch (ValidationException ex)

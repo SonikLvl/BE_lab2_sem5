@@ -20,7 +20,7 @@ namespace BE_project.Services
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO, int userId)
+        public async Task<RecordDTO> CreateRecordAsync(CreateRecordDTO createRecordDTO)
         {
             if (createRecordDTO.Amount <= 0)
             {
@@ -33,7 +33,7 @@ namespace BE_project.Services
                 throw new NotFoundException($"User with ID {createRecordDTO.UserId} not found. Cannot create record.");
             }
 
-            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId, userId);
+            var categoryExists = await _categoryRepository.GetByIdAsync(createRecordDTO.CategoryId, createRecordDTO.UserId);
             if (categoryExists == null)
             {
                 throw new NotFoundException($"Category with ID {createRecordDTO.CategoryId} not found. Cannot create record.");

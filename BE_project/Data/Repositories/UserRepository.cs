@@ -1,5 +1,6 @@
 ﻿using BE_project.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace BE_project.Data.Repositories
 {
@@ -7,9 +8,9 @@ namespace BE_project.Data.Repositories
     {
         private readonly ApplicationDbContext _context;
 
-        public UserRepository(ApplicationDbContext dataStore)
+        public UserRepository(ApplicationDbContext context)
         {
-            _context = dataStore;
+            _context = context;
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
@@ -39,6 +40,16 @@ namespace BE_project.Data.Repositories
 
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<bool> AnyAsync(Expression<Func<User, bool>> predicate)
+        {
+            return await _context.Users.AnyAsync(predicate);
+        }
+
+        public async Task<User?> FirstOrDefaultAsync(Expression<Func<User, bool>> predicate) 
+        {
+            return await _context.Users.FirstOrDefaultAsync(predicate);
         }
     }
 }

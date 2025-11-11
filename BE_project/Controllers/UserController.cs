@@ -1,6 +1,7 @@
 ﻿using BE_project.DTOs.User;
 using BE_project.Exceptions;
 using BE_project.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE_project.Controllers
@@ -15,7 +16,8 @@ namespace BE_project.Controllers
             _userService = userService;
         }
 
-        [HttpPost] // POST /user
+        [HttpPost("register")] // POST /user/register
+        [AllowAnonymous]
         public async Task<ActionResult<UserDTO>> CreateUser(CreateUserDTO userDTO)
         {
             try
@@ -26,6 +28,25 @@ namespace BE_project.Controllers
             catch (ValidationException ex)
             {
                 return BadRequest(new { message = ex.Message }); // 400
+            }
+        }
+
+        [HttpPost("login")] // POST /user/login
+        [AllowAnonymous] 
+        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        {
+            try
+            {
+                var token = await _userService.LoginAsync(loginDTO);
+                return Ok(new { accessToken = token });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message }); // 404 
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message }); // 400 
             }
         }
 
