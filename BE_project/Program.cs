@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,11 +45,73 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    // Параметри валідації токена
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ValidateIssuer = false, 
+        ValidateAudience = false, 
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+        ClockSkew = TimeSpan.Zero 
+    };
+
+    //  Обробники подій (еквівалент @jwt..._loader)
+    options.Events = new JwtBearerEvents
+    {
+        // Ця подія спрацьовує, якщо токен є, але він недійсний
+        OnAuthenticationFailed = (context) =>
+        {
+            // з'ясовуємо причину помилки
+            string errorType = "invalid_token";
+            if (context.Exception is SecurityTokenExpiredException)
+            {
+                errorType = "token_expired";
+            }
+
+            // Зберігаємо причину в HttpContext, щоб OnChallenge міг її прочитати
+            context.HttpContext.Items["JwtErrorType"] = errorType;
+
+            // Дозволяємо помилці пройти далі, що автоматично викличе OnChallenge
+            return Task.CompletedTask;
+        },
+
+        OnChallenge = async (context) =>
+        {
+            // Зупиняємо стандартну обробку
+            context.HandleResponse();
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+
+            object responseBody;
+
+            // Перевіряємо, чи OnAuthenticationFailed залишив нам повідомлення
+            if (context.HttpContext.Items.TryGetValue("JwtErrorType", out var errorTypeObj))
+            {
+                // це була помилка "token_expired" або "invalid_token"
+                string errorType = errorTypeObj as string;
+                if (errorType == "token_expired")
+                {
+                    responseBody = new { message = "The token has expired.", error = "token_expired" };
+                }
+                else // "invalid_token"
+                {
+                    responseBody = new { message = "Signature verification failed.", error = "invalid_token" };
+                }
+            }
+            else
+            {
+                // токен просто не надали (@jwt.unauthorized_loader)
+                responseBody = new
+                {
+                    description = "Request does not contain an access token.",
+                    error = "authorization_required",
+                };
+            }
+
+            var jsonResponse = JsonSerializer.Serialize(responseBody);
+            await context.Response.WriteAsync(jsonResponse);
+        }
     };
 });
 
