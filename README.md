@@ -1,10 +1,8 @@
-# Лабораторна 3
+# Лабораторна 4
 
-Мета роботи: Покращити проект шляхом валідації вхідних даних, обробки помилок та використання ORM з базою даних
+Мета роботи: Додати можливість аутентифікації в проект
 
 Виконала студентка групи ІО-32 Куліченко Софія
-
-Варіант додаткового завдання 32%3 = 2 (Користувацькі категорії витрат)
 
 ## Зміст
 
@@ -21,7 +19,7 @@
 
 API задеплоєно на Render.com. Ви можете переглянути всю документацію та протестувати ендпоінти в реальному часі за посиланням на Swagger UI:
 
-https://be-lab3-sem5.onrender.com/index.html
+https://be-lab4-sem5.onrender.com/index.html
 
 ---
 
@@ -61,6 +59,7 @@ https://be-lab3-sem5.onrender.com/index.html
     Створіть нову, порожню базу даних для проекту.
 
 3.  **Налаштування Конфігурації (User Secrets)**
+  
     Переконайтеся, що ви знаходитесь у директорії проекту (там, де лежить .csproj файл).
     Ініціалізуйте user secrets:
     ```bash
@@ -71,26 +70,49 @@ https://be-lab3-sem5.onrender.com/index.html
     dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Database=finance_db_local;Username=ВАШ_USERNAME;Password=ВАШ_ПАРОЛЬ"
     ```
 
-4.  **Застосування міграцій та запуск**
+    Підготуйте JWT. Для цього виконайте ці команди:
+    ```bash
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $rng.GetBytes($bytes)
+    [Convert]::ToBase64String($bytes)
+    ```
+    
+    Скопіюйте виданий рядок та додайте до usersecrets:
+    ```bash
+    dotnet user-secrets set "Jwt:Key" "Рядок_з_попереднього_кроку"
+    ```
+
+5.  **Застосування міграцій та запуск**
+    Додайте міграцію 
+    ```bash
+    dotnet ef migrations add [MigrationName]
+    ```
+    Актуалізуйте БД
+    ```bash
+    dotnet ef database update
+    ```
     Запустіть проект:
     ```bash
     dotnet run
     ```
-    
-    Проект налаштований на автоматичне створення міграцій але їх можна зробити вручну за допомогою:
+
+    АБО
+
+    Запустіть проект за допомогою докер. Але usersecrets не працюватиме потрібно буде визначати їх в docker файлі.
     ```bash
-    dotnet ef database update
+    docker-compose up --build
     ```
     
+    
 4.  **Перевірка**
-    API буде запущено на локальному хості (наприклад, http://localhost:5123 або https://localhost:7123). Точну адресу ви побачите у консолі.
+    API буде запущено на локальному хості (наприклад, http://localhost:5123 або https://localhost:8080 (для докеру)). Точну адресу ви побачите у консолі.
     За цим посиланням буде відкрито Swagger UI.
     
 ---
 
 ## Deploy
 
-Якщо немає бажання підіймати АПІ локально, то проект задеплоєний за посиланням [https://be-lab3-sem5.onrender.com/](https://be-lab3-sem5.onrender.com/index.html).
+Якщо немає бажання підіймати АПІ локально, то проект задеплоєний за посиланням [https://be-lab4-sem5.onrender.com/](https://be-lab4-sem5.onrender.com/index.html).
 
 ---
 
@@ -104,34 +126,38 @@ https://be-lab3-sem5.onrender.com/index.html
 
 Для зручного тестування ви можете використати наданий **Postman Flow**.
 
-<img width="1669" height="1121" alt="Screenshot 2025-11-05 180237" src="https://github.com/user-attachments/assets/2f9e8513-4f8c-424b-9cc2-4b20605f0b03" />
-
+<img width="1997" height="1176" alt="Screenshot 2025-11-12 103508" src="https://github.com/user-attachments/assets/f0a2e450-6e0b-4947-9466-b6ef355f40f0" />
 
 ---
 
 ## Endpoints API
 
 Нижче наведено список доступних ендпоінтів.
+Всі окрім register та login у юзера потребують JWT токена.
+
 Http запит повинен починатись з {{baseURL}}/api/....
 
 | Метод  | Шлях                                            | Опис                                                                                             |
 | :----- | :---------------------------------------------- | :-------------------------------------------------------------------------------------------- |
  | User 
-| `POST` | `/user`                                        | Створює нового користувача.                                                         |
+| `POST` | `/user/register`                                        | Створює нового користувача.                                                         |
+| `POST` | `/user/login`                                        | Створює токен авторизації користувача.                                                         |
 | `GET`  | `/user/users`                                  | Отримує список усіх користувачів.                                                     |
 | `GET`  | `/user/{id}`                                   | Отримує користувача за його `id`.                                                       |
+| `GET`  | `/user/self`                                   | Отримує користувача за токеном авторизації.                                                       |
 | `DELETE`| `/user/{id}`                                   | Видаляє користувача за його `id`.                                                   |
+| `DELETE`| `/user/self`                                   | Видаляє користувача за токеном авторизації.                                                  |
 |  Category 
-| `POST`  | `/category?userId={user_id}`                 | Створює нову категорію для юзера (відсутній юзер рівняється публічній категорії).     |
+| `POST`  | `/category`                 | Створює нову категорію для юзера (відсутній юзер рівняється публічній категорії).     |
 | `GET`  | `/category/all`                 | Отримує список усіх категорій.                |
-| `GET`  | `/category/allById?userId=1`                 | Отримує список усіх категорій для юзера (включно з публічними).                |
-| `GET`  | `/category/{id}/{user_id}`                 | Отримує категорію за юзером (включно з публічними).             |
-| `GET`  | `/category/{user_id}?categoryName={category_name}`                 | Отримує категорію за юзером та ім'ям (включно з публічними).               |
-| `DELETE`| `/category/{id}/{user_id}`                    | Видаляє категорію за її `id` (потребує юзера для валідації).                             |
+| `GET`  | `/category/allById`                 | Отримує список усіх категорій для юзера (включно з публічними).                |
+| `GET`  | `/category/{id}`                 | Отримує категорію за юзером (включно з публічними).             |
+| `GET`  | `/category?categoryName={category_name}`                 | Отримує категорію за юзером та ім'ям (включно з публічними).               |
+| `DELETE`| `/category/{id}`                    | Видаляє категорію за її `id`                           |
 |  Record 
 | `POST` | `/record`                                       | Створює новий запис про витрати.                                                         |
 | `GET`  | `/record/{id}`                                  | Отримує запис за його `id`.                                                            |
-| `DELETE`| `/record/{id}?userId={user_id}`                | Видаляє запис за його `id`.  (потребує юзера для валідації)                     |
-| `GET`  | `/record?userId={id}&categoryId={id}`    | Отримує записи, відфільтровані за `userId` та/або `categoryId`. |
+| `DELETE`| `/record/{id}`                | Видаляє запис за його `id`.                     |
+| `GET`  | `/record?categoryId={id}`    | Отримує записи, відфільтровані за `userId` та/або `categoryId`. |
 
 ---
